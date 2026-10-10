@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maedo Fishing - 방치형 낚시 온라인</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap');
+
+        body {
+            font-family: 'Jua', 'Gowun Dodum', sans-serif;
+            background: linear-gradient(135deg, #090d16 0%, #111827 100%);
+            color: #f8fafc;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .glass-panel {
+            background: rgba(20, 30, 48, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .glass-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .glass-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(129, 140, 248, 0.8);
+        }
+
+        .rarity-common { border-color: #9ca3af; color: #e5e7eb; background: rgba(156, 163, 175, 0.1); }
+        .rarity-uncommon { border-color: #22c55e; color: #4ade80; background: rgba(34, 197, 94, 0.1); }
+        .rarity-rare { border-color: #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+        .rarity-epic { border-color: #a855f7; color: #c084fc; background: rgba(168, 85, 247, 0.1); }
+        .rarity-legendary { border-color: #eab308; color: #fde047; background: rgba(234, 179, 8, 0.15); }
+        .rarity-mythic { border-color: #f43f5e; color: #fb7185; background: rgba(244, 63, 94, 0.2); animation: mythicGlow 2s infinite alternate; }
+
+        @keyframes mythicGlow {
+            0% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
+            100% { box-shadow: 0 0 18px rgba(244, 63, 94, 0.9); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+    <!-- TOP HEADER -->
+    <header class="glass-panel sticky top-0 z-40 px-4 py-3 border-b border-indigo-500/20">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid font-bold fa-fish-fins text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-cyan-400 via-indigo-300 to-amber-300 bg-clip-text text-transparent">
+                        Maedo Fishing <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 ml-1">방치형 낚시</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Maedo의 낚시터 모험</p>
+                </div>
+            </div>
+
+            <!-- CURRENCY DISPLAY -->
+            <div class="flex items-center gap-2 sm:gap-4 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700/60">
+                <div class="flex items-center gap-2" title="골드">
+                    <div class="w-6 h-6 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-400 text-xs shadow-inner">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <span id="gold-display" class="font-bold text-amber-300 text-sm sm:text-base">0</span>
+                </div>
+                <div class="h-4 w-[1px] bg-slate-700"></div>
+                <div class="flex items-center gap-2" title="마력 보석">
+                    <div class="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 text-xs shadow-inner">
+                        <i class="fa-solid fa-gem"></i>
+                    </div>
+                    <span id="gem-display" class="font-bold text-cyan-200 text-sm sm:text-base">0</span>
+                </div>
+                <div class="h-4 w-[1px] bg-slate-700"></div>
+                <div class="flex items-center gap-2" title="낚시 레벨">
+                    <div class="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-300 text-xs font-bold shadow-inner">
+                        Lv
+                    </div>
+                    <span id="level-display" class="font-bold text-emerald-300 text-sm sm:text-base">1</span>
+                </div>
+            </div>
+
+            <!-- HEADER ACTIONS -->
+            <div class="flex items-center gap-2">
+                <button id="sound-toggle-btn" class="glass-btn p-2.5 rounded-xl text-slate-300 hover:text-white" title="사운드 ON/OFF">
+                    <i class="fa-solid fa-volume-high text-lg" id="sound-icon"></i>
+                </button>
+                <button id="afk-mode-btn" class="glass-btn px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-amber-300 hover:text-amber-200 border-amber-500/40 flex items-center gap-1.5" title="절전 모드 (배경 실행)">
+                    <i class="fa-solid fa-moon"></i>
+                    <span class="hidden sm:inline">절전 모드</span>
+                </button>
+                <button id="reset-game-btn" class="glass-btn p-2.5 rounded-xl text-slate-400 hover:text-rose-400" title="데이터 초기화">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="max-w-6xl w-full mx-auto p-3 sm:p-4 flex-1 flex flex-col gap-4">
+        
+        <!-- TOP STATS & NOTIFICATION BAR -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <!-- EXP Progress -->
+            <div class="md:col-span-2 glass-panel p-3 rounded-2xl flex flex-col justify-center">
+                <div class="flex justify-between text-xs text-slate-300 mb-1">
+                    <span class="font-semibold text-indigo-300"><i class="fa-solid fa-star text-amber-400 mr-1"></i>낚시 숙련도 EXP</span>
+                    <span id="exp-text">0 / 100 (0%)</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700">
+                    <div id="exp-bar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Weather & Time Status -->
+            <div class="glass-panel p-3 rounded-2xl flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-400 mb-0.5">날씨 및 시간</div>
+                    <div id="weather-status-text" class="text-sm font-bold text-cyan-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-sun text-amber-400"></i> 낮 (맑음)
+                    </div>
+                </div>
+                <div class="text-right text-[11px] text-slate-400" id="weather-buff-text">
+                    속도 +0% / 행운 +0%
+                </div>
+            </div>
+
+            <!-- Fishing Speed & Rate Buff -->
+            <div class="glass-panel p-3 rounded-2xl flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-400 mb-0.5">현재 낚시 속도</div>
+                    <div id="fishing-speed-text" class="text-sm font-bold text-cyan-300">
+                        <i class="fa-solid fa-gauge-high mr-1"></i> 3.5초 / 회
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-slate-400 mb-0.5">희귀 획득 확률</div>
+                    <div id="luck-rate-text" class="text-xs font-bold text-amber-300">
+                        +0% 증가
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN LAYOUT: CANVAS & TABS -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+            
+            <!-- LEFT: CANVAS FISHING VIEW (5 cols on lg) -->
+            <div class="lg:col-span-5 flex flex-col gap-3">
+                <div class="glass-panel rounded-2xl p-3 flex flex-col relative overflow-hidden border border-cyan-500/20">
+                    <!-- Location Selector -->
+                    <div class="flex items-center justify-between mb-2 z-10">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-cyan-400"></i>
+                            <span id="current-spot-name" class="font-bold text-sm text-cyan-100">플라자 광장 분수대</span>
+                        </div>
+                        <span id="spot-level-req" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">입장 가능</span>
+                    </div>
+
+                    <!-- Canvas Interactive Area (고정 높이 부여) -->
+                    <div class="relative w-full h-[240px] rounded-xl overflow-hidden border border-slate-700/80 shadow-inner bg-slate-950">
+                        <canvas id="fishing-canvas" class="w-full h-full block cursor-pointer"></canvas>
+                        
+                        <!-- Manual Click Hint Overlay -->
+                        <div id="canvas-overlay-msg" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300 opacity-0">
+                            <div class="bg-slate-900/80 backdrop-blur px-4 py-2 rounded-2xl border border-amber-500/40 text-amber-300 text-sm font-bold animate-bounce flex items-center gap-2">
+                                <i class="fa-solid fa-hand-pointer text-amber-400"></i> 클릭해서 당기기! (속도 +50%)
+                            </div>
+                        </div>
+
+                        <!-- Float Hook Alert -->
+                        <div id="hook-alert" class="absolute top-4 left-1/2 -translate-x-1/2 bg-rose-600/90 text-white font-extrabold px-4 py-1.5 rounded-full text-xs shadow-lg border border-rose-300 opacity-0 transition-opacity duration-150 flex items-center gap-1.5">
+                            <i class="fa-solid fa-exclamation text-amber-300 animate-ping"></i> 입질 발생! [낚는 중...]
+                        </div>
+                    </div>
+
+                    <!-- Manual Reel Action Button -->
+                    <div class="mt-3 flex gap-2 z-10">
+                        <button id="manual-cast-btn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 font-bold text-sm text-white shadow-lg shadow-indigo-900/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-dharmachakra"></i> 수동 찌 던지기 / 당기기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RECENT CATCH LOG -->
+                <div class="glass-panel rounded-2xl p-3 flex-1 flex flex-col min-h-[160px] max-h-[220px]">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-300 flex items-center gap-1">
+                            <i class="fa-solid fa-list-ul text-indigo-400"></i> 실시간 획득 로그
+                        </span>
+                        <span class="text-[10px] text-slate-500">최근 15개</span>
+                    </div>
+                    <div id="catch-log-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                        <!-- Log items dynamically injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: TABBED CONTROLS & MANAGEMENT (7 cols on lg) -->
+            <div class="lg:col-span-7 flex flex-col gap-3">
+                
+                <!-- TAB BUTTONS -->
+                <div class="flex flex-wrap rounded-2xl glass-panel p-1.5 gap-1 text-xs font-bold">
+                    <button class="tab-btn active-tab flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-md" data-tab="tab-spot">
+                        <i class="fa-solid fa-water"></i> 낚시터
+                    </button>
+                    <button class="tab-btn flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tab-upgrades">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 장비/스킨
+                    </button>
+                    <button class="tab-btn flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tab-inventory">
+                        <i class="fa-solid fa-box-archive"></i> 가방
+                    </button>
+                    <button class="tab-btn flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tab-codex">
+                        <i class="fa-solid fa-book-bookmark"></i> 도감
+                    </button>
+                    <button class="tab-btn flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tab-quests">
+                        <i class="fa-solid fa-trophy text-amber-400"></i> 업적
+                    </button>
+                    <button class="tab-btn flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tab-roulette">
+                        <i class="fa-solid fa-dharmachakra text-pink-400"></i> 룰렛
+                    </button>
+                    <button class="tab-btn flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tab-prestige">
+                        <i class="fa-solid fa-signs-post text-cyan-400"></i> 환생
+                    </button>
+                </div>
+
+                <!-- TAB CONTENT CONTAINER -->
+                <div class="glass-panel rounded-2xl p-4 flex-1 min-h-[420px] flex flex-col justify-between">
+                    
+                    <!-- 1. TAB: FISHING SPOTS -->
+                    <div id="tab-spot" class="tab-panel flex-1 flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-indigo-300">낚시터 이동</h3>
+                                <p class="text-xs text-slate-400">높은 등급의 낚시터일수록 희귀 보물과 고급 어종이 출현합니다.</p>
+                            </div>
+                        </div>
+                        <div id="spot-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto max-h-[340px] pr-1"></div>
+                    </div>
+
+                    <!-- 2. TAB: UPGRADES & SKINS -->
+                    <div id="tab-upgrades" class="tab-panel hidden flex-1 flex flex-col gap-3 overflow-y-auto max-h-[380px] pr-1">
+                        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-amber-300">낚시 장비 강화</h3>
+                                <p class="text-xs text-slate-400">낚싯대, 릴, 미끼를 강화하여 속도와 행운 수치를 높이세요.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="glass-panel p-3 rounded-xl border border-slate-700/60 flex flex-col justify-between">
+                                <div class="text-center">
+                                    <div class="w-12 h-12 mx-auto rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 text-xl mb-2">
+                                        <i class="fa-solid fa-wand-line"></i>
+                                    </div>
+                                    <div id="rod-title" class="font-bold text-sm text-indigo-200">기본 나무 낚싯대</div>
+                                    <div id="rod-level" class="text-xs text-slate-400">Lv.1</div>
+                                    <p id="rod-desc" class="text-[11px] text-slate-300 mt-2 bg-slate-900/50 p-2 rounded-lg">낚시 속도 <span class="text-emerald-400 font-bold">+0%</span></p>
+                                </div>
+                                <button id="upgrade-rod-btn" class="mt-3 w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white transition-all">강화 (100G)</button>
+                            </div>
+                            <div class="glass-panel p-3 rounded-xl border border-slate-700/60 flex flex-col justify-between">
+                                <div class="text-center">
+                                    <div class="w-12 h-12 mx-auto rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 text-xl mb-2">
+                                        <i class="fa-solid fa-circle-notch"></i>
+                                    </div>
+                                    <div id="reel-title" class="font-bold text-sm text-cyan-200">일반 감기 릴</div>
+                                    <div id="reel-level" class="text-xs text-slate-400">Lv.1</div>
+                                    <p id="reel-desc" class="text-[11px] text-slate-300 mt-2 bg-slate-900/50 p-2 rounded-lg">입질 대기시간 <span class="text-cyan-400 font-bold">-0%</span></p>
+                                </div>
+                                <button id="upgrade-reel-btn" class="mt-3 w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-bold text-xs text-white transition-all">강화 (150G)</button>
+                            </div>
+                            <div class="glass-panel p-3 rounded-xl border border-slate-700/60 flex flex-col justify-between">
+                                <div class="text-center">
+                                    <div class="w-12 h-12 mx-auto rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 text-xl mb-2">
+                                        <i class="fa-solid fa-worm"></i>
+                                    </div>
+                                    <div id="bait-title" class="font-bold text-sm text-amber-200">지렁이 미끼</div>
+                                    <div id="bait-level" class="text-xs text-slate-400">Lv.1</div>
+                                    <p id="bait-desc" class="text-[11px] text-slate-300 mt-2 bg-slate-900/50 p-2 rounded-lg">희귀 어종 확률 <span class="text-amber-400 font-bold">+0%</span></p>
+                                </div>
+                                <button id="upgrade-bait-btn" class="mt-3 w-full py-2 rounded-lg bg-amber-600 hover:bg-amber-500 font-bold text-xs text-white transition-all">강화 (200G)</button>
+                            </div>
+                        </div>
+
+                        <!-- ROD SKINS SECTION -->
+                        <div class="mt-3 border-t border-slate-700/60 pt-3">
+                            <h4 class="text-xs font-bold text-indigo-300 mb-2"><i class="fa-solid fa-shirt mr-1"></i> 낚싯대 외형 스킨 장착</h4>
+                            <div id="skins-container" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. TAB: INVENTORY & AUTO-SELL -->
+                    <div id="tab-inventory" class="tab-panel hidden flex-1 flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-purple-300">소지품 가방 (<span id="inv-count">0</span>/30)</h3>
+                                <p class="text-xs text-slate-400">획득한 어류, 보물 상자, 전설 장비를 관리합니다.</p>
+                            </div>
+                            <button id="sell-all-btn" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white transition-all">
+                                <i class="fa-solid fa-coins mr-1"></i> 소지품 전체 일괄 판매
+                            </button>
+                        </div>
+                        <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-amber-400 text-base"></i>
+                                <div>
+                                    <div class="font-bold text-slate-200">모든 아이템 자동 판매</div>
+                                    <p class="text-[10px] text-slate-400">획득하는 모든 어류 및 아이템을 선택 없이 즉시 골드로 판매합니다.</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="autosell-all-toggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+                        <div id="inventory-grid" class="grid grid-cols-5 sm:grid-cols-6 gap-2 overflow-y-auto max-h-[260px] p-1"></div>
+                    </div>
+
+                    <!-- 4. TAB: CODEX -->
+                    <div id="tab-codex" class="tab-panel hidden flex-1 flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-cyan-300">어류 & 보물 도감</h3>
+                                <p class="text-xs text-slate-400">수집 진행도: <span id="codex-completion-text" class="text-amber-300 font-bold">0%</span></p>
+                            </div>
+                        </div>
+                        <div id="codex-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto max-h-[300px] pr-1"></div>
+                    </div>
+
+                    <!-- 5. TAB: QUESTS & ACHIEVEMENTS -->
+                    <div id="tab-quests" class="tab-panel hidden flex-1 flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-amber-300">업적 및 퀘스트</h3>
+                                <p class="text-xs text-slate-400">목표를 달성하고 마력 보석 보상을 받으세요!</p>
+                            </div>
+                        </div>
+                        <div id="quests-container" class="flex flex-col gap-2.5 overflow-y-auto max-h-[310px] pr-1"></div>
+                    </div>
+
+                    <!-- 6. TAB: ROULETTE -->
+                    <div id="tab-roulette" class="tab-panel hidden flex-1 flex flex-col items-center justify-center gap-4 text-center">
+                        <div>
+                            <h3 class="text-base font-bold text-pink-300"><i class="fa-solid fa-dharmachakra mr-1.5"></i>행운의 마력 룰렛</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">마력 보석 <strong>5개</strong>를 소모하여 대박 상품에 도전하세요!</p>
+                        </div>
+                        <div id="roulette-box" class="w-full max-w-sm glass-panel p-6 rounded-2xl border border-pink-500/40 shadow-xl flex flex-col items-center gap-3">
+                            <div id="roulette-result-display" class="text-lg font-extrabold text-amber-300 h-12 flex items-center justify-center bg-slate-900/60 w-full rounded-xl border border-slate-800">
+                                룰렛을 돌려보세요!
+                            </div>
+                            <button id="spin-roulette-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:opacity-90 font-bold text-sm text-white shadow-lg transition-all">
+                                룰렛 돌리기 (보석 5개)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 7. TAB: PRESTIGE (REINCARNATION) -->
+                    <div id="tab-prestige" class="tab-panel hidden flex-1 flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-cyan-300">신비한 환생 (프레스티지)</h3>
+                                <p class="text-xs text-slate-400">레벨 30 이상 달성 시 환생하여 영구 버프 재화를 획득합니다.</p>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border border-cyan-500/30 flex flex-col items-center text-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 text-2xl shadow-inner animate-pulse">
+                                <i class="fa-solid fa-water"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">현재 보유 신의 물방울: <span id="prestige-drops" class="text-cyan-300 text-base">0개</span></h4>
+                                <p class="text-[11px] text-slate-300 mt-1">환생 시 레벨, 골드, 장비가 초기화되지만, 낚시 속도와 행운이 영구적으로 상승합니다!</p>
+                            </div>
+                            <button id="do-prestige-btn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:opacity-90 font-bold text-xs text-white shadow-md transition-all">
+                                환생하기 (요건: Lv.30 이상)
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div class="glass-panel p-3 rounded-xl border border-slate-700/60 flex flex-col justify-between">
+                                <div class="text-xs text-slate-300">속도 영구 강화 (Lv.<span id="p-speed-lv">0</span>)</div>
+                                <div class="text-[10px] text-slate-400 mt-1">낚시 속도 +<span id="p-speed-val">0</span>%</div>
+                                <button id="upgrade-p-speed" class="mt-2 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white">물방울 1개 소모</button>
+                            </div>
+                            <div class="glass-panel p-3 rounded-xl border border-slate-700/60 flex flex-col justify-between">
+                                <div class="text-xs text-slate-300">행운 영구 강화 (Lv.<span id="p-luck-lv">0</span>)</div>
+                                <div class="text-[10px] text-slate-400 mt-1">희귀 확률 +<span id="p-luck-val">0</span>%</div>
+                                <button id="upgrade-p-luck" class="mt-2 py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white">물방울 1개 소모</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 확장 성장 시스템: 희귀/보스, 일일 퀘스트, 오프라인 보상, 실시간 통계 -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+          <div class="glass-panel rounded-2xl p-4 border border-amber-500/20">
+            <h3 class="font-bold text-amber-300 mb-1"><i class="fa-solid fa-crown mr-2"></i>희귀 물고기 & 보스 기록</h3>
+            <p class="text-xs text-slate-400 mb-3">황금 물고기와 거대 보스는 낮은 확률로 등장하며 특별 보상을 줍니다.</p>
+            <div id="special-catch-status" class="text-sm text-slate-200">황금 물고기 0마리 · 보스 0마리</div>
+            <div id="rod-evolution-status" class="text-xs text-cyan-300 mt-2">낚싯대 진화: 기본형</div>
+            <button id="rod-enhance-btn" class="mt-3 w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-bold">낚싯대 강화 +1 (비용 확인)</button>
+            <p class="text-[10px] text-slate-500 mt-2">강화 실패/파괴 없음 · +5, +10, +15 단계에서 외형 등급 상승</p>
+          </div>
+          <div class="glass-panel rounded-2xl p-4 border border-cyan-500/20">
+            <h3 class="font-bold text-cyan-300 mb-1"><i class="fa-solid fa-chart-line mr-2"></i>실시간 수익 통계</h3>
+            <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
+              <div class="bg-slate-900/60 rounded-lg p-3">초당 골드 <b id="stat-gps" class="block text-amber-300 text-base">0 G/s</b></div>
+              <div class="bg-slate-900/60 rounded-lg p-3">분당 골드 <b id="stat-gpm" class="block text-amber-300 text-base">0 G/m</b></div>
+              <div class="bg-slate-900/60 rounded-lg p-3">시간당 골드 <b id="stat-gph" class="block text-amber-300 text-base">0 G/h</b></div>
+              <div class="bg-slate-900/60 rounded-lg p-3">누적 낚시 <b id="stat-caught" class="block text-cyan-300 text-base">0회</b></div>
+            </div>
+            <p id="stat-rare" class="text-xs text-slate-400 mt-3">희귀 획득 확률: 계산 중</p>
+          </div>
+          <div class="glass-panel rounded-2xl p-4 border border-emerald-500/20">
+            <h3 class="font-bold text-emerald-300 mb-1"><i class="fa-solid fa-calendar-check mr-2"></i>일일 퀘스트 & 연속 출석</h3>
+            <p id="daily-quest-text" class="text-xs text-slate-300 mt-2">오늘의 임무: 물고기 50마리 잡기</p>
+            <p id="daily-streak-text" class="text-xs text-slate-400 mt-1">연속 출석: 0일</p>
+            <button id="daily-claim-btn" class="mt-3 w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold">일일 보상 받기</button>
+          </div>
+          <div class="glass-panel rounded-2xl p-4 border border-purple-500/20">
+            <h3 class="font-bold text-purple-300 mb-1"><i class="fa-solid fa-moon mr-2"></i>오프라인 보상</h3>
+            <p class="text-xs text-slate-400 mt-2">게임을 닫아도 최대 8시간분의 보상을 계산합니다.</p>
+            <p id="offline-status" class="text-sm text-slate-200 mt-2">오프라인 보상 대기 중</p>
+            <button id="offline-claim-btn" class="mt-3 w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-sm font-bold">보상 확인 / 받기</button>
+          </div>
+          <div class="glass-panel rounded-2xl p-4 border border-blue-500/20 lg:col-span-2">
+            <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="font-bold text-blue-300"><i class="fa-solid fa-map mr-2"></i>낚시 지역 진행</h3><p class="text-xs text-slate-400 mt-1">연못 → 강 → 바다 → 심해 → 용암 호수 → 우주 바다</p></div><span id="region-progress" class="text-xs text-cyan-300">1 / 6 지역</span></div>
+            <div id="region-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-3"></div>
+          </div>
+        </section>
+    </main>
+
+    <!-- AFK POWER SAVER OVERLAY -->
+    <div id="afk-overlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center hidden">
+        <div class="text-center p-6 max-w-sm rounded-3xl glass-panel border border-indigo-500/30 shadow-2xl">
+            <div class="w-20 h-20 mx-auto rounded-full bg-indigo-500/10 border border-indigo-400/30 flex items-center justify-center text-indigo-400 text-3xl mb-4 animate-pulse">
+                <i class="fa-solid fa-moon"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-1">절전 / 방치 모드 작동 중</h2>
+            <p class="text-xs text-slate-400 mb-6">배터리와 디스플레이를 보호하며 자동 낚시를 진행합니다.</p>
+            <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 text-left space-y-2 mb-6">
+                <div class="flex justify-between text-xs"><span class="text-slate-400">방치 경과 시간:</span><span id="afk-timer-text" class="font-mono font-bold text-indigo-300">00:00:00</span></div>
+                <div class="flex justify-between text-xs"><span class="text-slate-400">획득한 어류/아이템:</span><span id="afk-count-text" class="font-bold text-emerald-400">0 개</span></div>
+                <div class="flex justify-between text-xs"><span class="text-slate-400">획득 누적 골드:</span><span id="afk-gold-text" class="font-bold text-amber-300">0 G</span></div>
+            </div>
+            <button id="exit-afk-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-sm text-white shadow-lg hover:opacity-90 transition-all">
+                화면 밝히기 (클릭)
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER ATTRIBUTION -->
+    <footer class="text-center py-3 text-xs text-slate-500 glass-panel border-t border-slate-800 mt-2">
+        <p>© 2026 <span class="text-indigo-400 font-semibold">Maedo Fishing</span> - Maedo의 방치형 낚시 온라인</p>
+    </footer>
+
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+            }
+            playCast() {
+                if (!this.enabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+            playBite() {
+                if (!this.enabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(1200, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+            playReel() {
+                if (!this.enabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300 + Math.random() * 200, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+            playCatch() {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.5);
+            }
+        }
+
+        const sfx = new SoundFX();
+
+        const SPOTS = [
+            { id: 0, name: "플라자 광장 분수대", minLevel: 1, bgGradient: ['#0f172a', '#1e293b', '#0284c7'] },
+            { id: 1, name: "신비한 달빛 호수", minLevel: 5, bgGradient: ['#1e1b4b', '#312e81', '#4338ca'] },
+            { id: 2, name: "심해 불꽃 용암 해구", minLevel: 15, bgGradient: ['#450a0a', '#7f1d1d', '#b91c1c'] },
+            { id: 3, name: "깊은 심해", minLevel: 30, bgGradient: ['#082f49', '#164e63', '#0e7490'] },
+            { id: 4, name: "용암 호수", minLevel: 45, bgGradient: ['#450a0a', '#9a3412', '#f97316'] },
+            { id: 5, name: "우주 바다", minLevel: 60, bgGradient: ['#2e1065', '#581c87', '#9333ea'] }
+        ];
+
+        const ROD_SKINS = [
+            { id: 'default', name: '기본 나무 낚싯대', color: '#cbd5e1', speedBonus: 0, luckBonus: 0, costGems: 0, desc: '기본적인 낚싯대' },
+            { id: 'gold', name: '황금 낚싯대', color: '#fbbf24', speedBonus: 0.1, luckBonus: 0.05, costGems: 20, desc: '속도 +10%, 행운 +5%' },
+            { id: 'cyber', name: '네온 사이버 낚싯대', color: '#38bdf8', speedBonus: 0.2, luckBonus: 0.1, costGems: 50, desc: '속도 +20%, 행운 +10%' },
+            { id: 'cosmic', name: '우주 크리스탈 낚싯대', color: '#f43f5e', speedBonus: 0.35, luckBonus: 0.2, costGems: 100, desc: '속도 +35%, 행운 +20%' }
+        ];
+
+        const ITEM_DATABASE = [
+            { id: 'f01', name: '피라미', type: 'fish', rarity: 'common', val: 15, exp: 10, icon: '🐟', spotId: 0 },
+            { id: 'f02', name: '붕어', type: 'fish', rarity: 'common', val: 25, exp: 15, icon: '🐟', spotId: 0 },
+            { id: 'f03', name: '메기', type: 'fish', rarity: 'uncommon', val: 60, exp: 35, icon: '🐠', spotId: 0 },
+            { id: 'c01', name: '낡은 목재 상자', type: 'chest', rarity: 'uncommon', val: 100, exp: 50, icon: '📦', spotId: 0 },
+            { id: 'f04', name: '은빛 메기', type: 'fish', rarity: 'uncommon', val: 120, exp: 60, icon: '🐠', spotId: 1 },
+            { id: 'f05', name: '달빛 무지개 송어', type: 'fish', rarity: 'rare', val: 280, exp: 120, icon: '🐡', spotId: 1 },
+            { id: 'g01', name: '미확인 장비 상자', type: 'chest', rarity: 'rare', val: 400, exp: 180, icon: '🧰', spotId: 1 },
+            { id: 'f06', name: '볼케이노 가물치', type: 'fish', rarity: 'rare', val: 550, exp: 250, icon: '🦈', spotId: 2 },
+            { id: 'f07', name: '용암 심해 오징어', type: 'fish', rarity: 'epic', val: 1200, exp: 500, icon: '🦑', spotId: 2 },
+            { id: 'g02', name: '불멸의 용사 갑옷 상자', type: 'gear', rarity: 'epic', val: 2500, exp: 900, icon: '🛡️', spotId: 2 },
+            { id: 'f08', name: '크리스탈 은하룡', type: 'fish', rarity: 'legendary', val: 5000, exp: 2000, icon: '🐉', spotId: 3 },
+            { id: 'g03', name: '용왕의 수호 투구', type: 'gear', rarity: 'mythic', val: 20000, exp: 8000, icon: '👑', spotId: 3 },
+            { id: 'f09', name: '심해 아귀', type: 'fish', rarity: 'epic', val: 8500, exp: 3200, icon: '🐟', spotId: 3 },
+            { id: 'f10', name: '용암 황금 잉어', type: 'fish', rarity: 'legendary', val: 18000, exp: 6500, icon: '🐠', spotId: 4 },
+            { id: 'f11', name: '성운 고래', type: 'fish', rarity: 'mythic', val: 50000, exp: 15000, icon: '🐋', spotId: 5 },
+            { id: 'golden_fish', name: '황금 물고기', type: 'fish', rarity: 'legendary', val: 10000, exp: 3000, icon: '🌟', spotId: 0, special: 'golden' },
+            { id: 'boss_fish', name: '거대 심해 보스', type: 'fish', rarity: 'mythic', val: 50000, exp: 12000, icon: '🐉', spotId: 1, special: 'boss' }
+        ];
+
+        const ACHIEVEMENTS_DEF = [
+            { id: 'catch_10', title: '초보 강태공', desc: '물고기를 총 10마리 획득하기', target: 10, rewardGems: 5, type: 'caught' },
+            { id: 'catch_50', title: '숙련된 낚시꾼', desc: '물고기를 총 50마리 획득하기', target: 50, rewardGems: 15, type: 'caught' },
+            { id: 'catch_200', title: '바다의 지배자', desc: '물고기를 총 200마리 획득하기', target: 200, rewardGems: 40, type: 'caught' },
+            { id: 'gold_1000', title: '부자의 길', desc: '누적 골드 1,000G 달성하기', target: 1000, rewardGems: 10, type: 'gold' },
+            { id: 'gold_50000', title: '대부호', desc: '누적 골드 50,000G 달성하기', target: 50000, rewardGems: 50, type: 'gold' },
+            { id: 'upgrade_5', title: '장비 마니아', desc: '아무 장비나 Lv.5 달성하기', target: 5, rewardGems: 20, type: 'upgrade' }
+        ];
+
+        let state = {
+            gold: 100,
+            gems: 30,
+            level: 1,
+            exp: 0,
+            maxExp: 100,
+            currentSpot: 0,
+            autoFishing: true,
+            rodLv: 1,
+            reelLv: 1,
+            baitLv: 1,
+            inventory: [],
+            maxInv: 30,
+            codex: {},
+            autoSellAll: true,
+            totalCaught: 0,
+            totalGoldEarned: 0,
+            achievements: {},
+            prestigeDrops: 0,
+            pSpeedLv: 0,
+            pLuckLv: 0,
+            equippedSkin: 'default',
+            unlockedSkins: { default: true },
+            rodEnhanceLv: 0, goldenCaught: 0, bossCaught: 0, dailyStreak: 0, lastDailyClaim: '', lastSeen: Date.now(), offlinePending: 0, sessionStartedAt: Date.now(), sessionGoldStart: 0, dailyQuestClaimed: false
+        };
+
+        let currentWeather = 0;
+        const WEATHERS = [
+            { name: '낮 (맑음)', icon: '<i class="fa-solid fa-sun text-amber-400"></i>', speedMult: 1.0, luckMult: 0 },
+            { name: '밤 (고요함)', icon: '<i class="fa-solid fa-moon text-indigo-300"></i>', speedMult: 1.05, luckMult: 0.1 },
+            { name: '비 (풍어)', icon: '<i class="fa-solid fa-cloud-rain text-cyan-400"></i>', speedMult: 1.2, luckMult: 0.05 },
+            { name: '눈 (서늘함)', icon: '<i class="fa-solid fa-snowflake text-blue-300"></i>', speedMult: 0.95, luckMult: 0.15 }
+        ];
+
+        let afkStats = { seconds: 0, itemsCaught: 0, goldEarned: 0 };
+        let afkInterval = null;
+
+        const canvas = document.getElementById('fishing-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let fishingState = 'idle';
+        let stateTimer = 0;
+        let bobberPos = { x: 0, y: 0 };
+        let rippleRadius = 0;
+        let reelProgress = 0;
+
+        function resizeCanvas() {
+            if (!canvas || !canvas.parentElement) return;
+            canvas.width = Math.max(300, canvas.parentElement.clientWidth);
+            canvas.height = Math.max(220, canvas.parentElement.clientHeight);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function renderCanvas() {
+            const w = canvas.width || 300;
+            const h = canvas.height || 220;
+            ctx.clearRect(0, 0, w, h);
+
+            const currentSpotObj = SPOTS[state.currentSpot] || SPOTS[0];
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, currentSpotObj.bgGradient[0]);
+            grad.addColorStop(0.4, currentSpotObj.bgGradient[1]);
+            grad.addColorStop(1, currentSpotObj.bgGradient[2]);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            const time = Date.now() * 0.002;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.beginPath();
+            for (let x = 0; x <= w; x += 20) {
+                const y = Math.sin(x * 0.02 + time) * 6 + h * 0.45;
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+            ctx.fill();
+
+            if (currentWeather === 2) {
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 20; i++) {
+                    let rx = (i * 35 + (Date.now() * 0.5) % w) % w;
+                    let ry = (i * 20 + (Date.now() * 0.8) % h) % h;
+                    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 3, ry + 12); ctx.stroke();
+                }
+            } else if (currentWeather === 3) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                for (let i = 0; i < 15; i++) {
+                    let sx = (i * 40 + Math.sin(time + i) * 10 + (Date.now() * 0.2) % w) % w;
+                    let sy = (i * 25 + (Date.now() * 0.3) % h) % h;
+                    ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, h * 0.75, w * 0.35, h * 0.25);
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, h * 0.75, w * 0.35, 6);
+
+            ctx.fillStyle = '#f8fafc';
+            const catX = w * 0.15;
+            const catY = h * 0.68;
+            ctx.beginPath(); ctx.arc(catX, catY, 14, 0, Math.PI * 2); ctx.fill();
+
+            const tipX = catX + 50;
+            const tipY = catY - 30;
+
+            const activeSkinObj = ROD_SKINS.find(s => s.id === state.equippedSkin) || ROD_SKINS[0];
+            ctx.strokeStyle = activeSkinObj.color;
+            ctx.lineWidth = state.equippedSkin === 'cosmic' ? 4 : 3;
+            ctx.beginPath(); ctx.moveTo(catX, catY); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+            if (fishingState !== 'idle') {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(tipX, tipY);
+                if (fishingState === 'casting') {
+                    ctx.quadraticCurveTo((tipX + bobberPos.x) / 2, tipY - 20, bobberPos.x, bobberPos.y);
+                } else {
+                    ctx.lineTo(bobberPos.x, bobberPos.y);
+                }
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(bobberPos.x, bobberPos.y);
+                if (fishingState === 'waiting' || fishingState === 'hooked') {
+                    ctx.translate(0, Math.sin(time * 4) * 3);
+                }
+                ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(0, -5, 5, Math.PI, 0); ctx.fill();
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, -5, 5, 0, Math.PI); ctx.fill();
+
+                if (fishingState === 'waiting' || fishingState === 'reeling') {
+                    rippleRadius = (rippleRadius + 0.3) % 15;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (1 - rippleRadius / 15) + ')';
+                    ctx.lineWidth = 1.5; ctx.beginPath();
+                    ctx.ellipse(0, 0, rippleRadius, rippleRadius * 0.4, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            if (fishingState === 'reeling') {
+                const barW = 120; const barH = 10;
+                const bx = w / 2 - barW / 2; const by = h * 0.2;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.8)'; ctx.fillRect(bx - 2, by - 2, barW + 4, barH + 4);
+                ctx.fillStyle = '#38bdf8'; ctx.fillRect(bx, by, (barW * reelProgress) / 100, barH);
+            }
+
+            requestAnimationFrame(renderCanvas);
+        }
+
+        function getFishingSpeedMult() {
+            const skin = ROD_SKINS.find(s => s.id === state.equippedSkin) || ROD_SKINS[0];
+            const weatherMult = WEATHERS[currentWeather].speedMult;
+            return (1 + (state.rodLv - 1) * 0.15 + ((state.rodEnhanceLv || 0) * 0.02) + skin.speedBonus) * (1 + state.pSpeedLv * 0.10) * weatherMult;
+        }
+
+        function getLuckBonus() {
+            const skin = ROD_SKINS.find(s => s.id === state.equippedSkin) || ROD_SKINS[0];
+            const weatherLuck = WEATHERS[currentWeather].luckMult;
+            return ((state.baitLv - 1) * 0.05) + skin.luckBonus + (state.pLuckLv * 0.05) + weatherLuck;
+        }
+
+        function stepFishingLogic() {
+            const hookAlert = document.getElementById('hook-alert');
+            const overlayMsg = document.getElementById('canvas-overlay-msg');
+
+            if (fishingState === 'idle') {
+                fishingState = 'casting';
+                bobberPos = { x: canvas.width * 0.15 + 50, y: canvas.height * 0.68 - 30 };
+                const targetX = canvas.width * 0.6 + Math.random() * 40;
+                const targetY = canvas.height * 0.55;
+                sfx.playCast();
+
+                let progress = 0;
+                const castInterval = setInterval(() => {
+                    progress += 0.1;
+                    bobberPos.x += (targetX - bobberPos.x) * 0.2;
+                    bobberPos.y += (targetY - bobberPos.y) * 0.2;
+                    if (progress >= 1) {
+                        clearInterval(castInterval);
+                        fishingState = 'waiting';
+                        stateTimer = 0;
+                    }
+                }, 30);
+            } else if (fishingState === 'waiting') {
+                stateTimer += 0.1;
+                const requiredWait = Math.max(0.6, (3.5 - (state.reelLv - 1) * 0.3) / (1 + state.pSpeedLv * 0.05));
+                if (stateTimer >= requiredWait) {
+                    fishingState = 'hooked';
+                    sfx.playBite();
+                    if(hookAlert) hookAlert.style.opacity = '1';
+                    if(overlayMsg) overlayMsg.style.opacity = '1';
+                    stateTimer = 0;
+                    reelProgress = 0;
+                }
+            } else if (fishingState === 'hooked') {
+                stateTimer += 0.1;
+                if (stateTimer >= 0.5) {
+                    if(hookAlert) hookAlert.style.opacity = '0';
+                    fishingState = 'reeling';
+                }
+            } else if (fishingState === 'reeling') {
+                const speed = 2.5 * getFishingSpeedMult();
+                reelProgress += speed;
+                if (Math.random() < 0.3) sfx.playReel();
+                if (reelProgress >= 100) {
+                    if(overlayMsg) overlayMsg.style.opacity = '0';
+                    catchLoot();
+                    fishingState = 'idle';
+                }
+            }
+        }
+
+        function catchLoot() {
+            sfx.playCatch();
+            const spotItems = ITEM_DATABASE.filter(item => item.spotId <= state.currentSpot);
+            const luck = getLuckBonus();
+            let selectedItem = spotItems[0];
+
+            const rand = Math.random() - luck;
+            if (rand < 0.05 && spotItems.some(i => i.rarity === 'mythic')) {
+                selectedItem = spotItems.find(i => i.rarity === 'mythic') || selectedItem;
+            } else if (rand < 0.15 && spotItems.some(i => i.rarity === 'legendary')) {
+                selectedItem = spotItems.find(i => i.rarity === 'legendary') || selectedItem;
+            } else if (rand < 0.35 && spotItems.some(i => i.rarity === 'epic')) {
+                selectedItem = spotItems.filter(i => i.rarity === 'epic').slice(-1)[0] || selectedItem;
+            } else if (rand < 0.60 && spotItems.some(i => i.rarity === 'rare')) {
+                selectedItem = spotItems.filter(i => i.rarity === 'rare').slice(-1)[0] || selectedItem;
+            } else {
+                const commons = spotItems.filter(i => i.rarity === 'common' || i.rarity === 'uncommon');
+                selectedItem = commons[Math.floor(Math.random() * commons.length)] || spotItems[0];
+            }
+
+            // 낮은 확률의 특별 어종: 황금 물고기 1.2%, 거대 보스 0.25%
+            const specialRoll = Math.random();
+            if (specialRoll < 0.0025) { selectedItem = ITEM_DATABASE.find(i => i.special === 'boss_fish' || i.special === 'boss') || ITEM_DATABASE.find(i => i.id === 'boss_fish') || selectedItem; }
+            else if (specialRoll < 0.0145) { selectedItem = ITEM_DATABASE.find(i => i.id === 'golden_fish') || selectedItem; }
+            if (selectedItem.special === 'golden') { state.goldenCaught = (state.goldenCaught || 0) + 1; state.gems += 2; addLog('✨ 황금 물고기 등장! 보너스 보석 +2개!', 'text-amber-300 font-extrabold animate-pulse'); }
+            if (selectedItem.special === 'boss') { state.bossCaught = (state.bossCaught || 0) + 1; state.gems += 10; addLog('🐉 거대 보스 격파! 특별 보상 보석 +10개!', 'text-rose-400 font-extrabold animate-pulse'); }
+            state.totalCaught++;
+            state.codex[selectedItem.id] = (state.codex[selectedItem.id] || 0) + 1;
+
+            if (state.autoSellAll) {
+                addGold(selectedItem.val);
+                addExp(selectedItem.exp);
+                addLog(`[자동판매] ${selectedItem.icon} ${selectedItem.name} (+${selectedItem.val}G)`, 'text-amber-300 font-semibold');
+                if (!document.getElementById('afk-overlay').classList.contains('hidden')) {
+                    afkStats.goldEarned += selectedItem.val;
+                    afkStats.itemsCaught++;
+                }
+            } else {
+                if (state.inventory.length < state.maxInv) {
+                    state.inventory.push({ ...selectedItem, instanceId: Date.now() + Math.random() });
+                    addExp(selectedItem.exp);
+                    addLog(`[획득!] ${selectedItem.icon} ${selectedItem.name} (${getRarityLabel(selectedItem.rarity)})`, getRarityTextColor(selectedItem.rarity));
+                    if (!document.getElementById('afk-overlay').classList.contains('hidden')) {
+                        afkStats.itemsCaught++;
+                    }
+                } else {
+                    addLog(`[가방 가득참] ${selectedItem.name}을(를) 놓쳤습니다!`, 'text-rose-400 font-bold');
+                }
+            }
+
+            updateUI();
+            saveGame();
+        }
+
+        function addGold(amount) {
+            state.gold += amount;
+            state.totalGoldEarned += amount;
+        }
+
+        function addExp(amount) {
+            state.exp += amount;
+            if (state.exp >= state.maxExp) {
+                state.exp -= state.maxExp;
+                state.level++;
+                state.maxExp = Math.floor(state.maxExp * 1.3);
+                state.gems += 5;
+                addLog(`🎉 낚시 레벨 업! Level ${state.level} 달성! (+5 마력 보석)`, 'text-amber-300 font-bold');
+            }
+        }
+
+        function getRarityLabel(rarity) {
+            const map = { common: '일반', uncommon: '고급', rare: '희귀', epic: '영웅', legendary: '전설', mythic: '신화' };
+            return map[rarity] || rarity;
+        }
+
+        function getRarityTextColor(rarity) {
+            const map = {
+                common: 'text-slate-300',
+                uncommon: 'text-green-400',
+                rare: 'text-blue-400',
+                epic: 'text-purple-400',
+                legendary: 'text-amber-300 font-bold',
+                mythic: 'text-rose-400 font-extrabold animate-pulse'
+            };
+            return map[rarity] || 'text-slate-200';
+        }
+
+        function addLog(msg, colorClass = 'text-slate-300') {
+            const logList = document.getElementById('catch-log-list');
+            if (!logList) return;
+            const item = document.createElement('div');
+            item.className = `px-2 py-1 rounded bg-slate-900/60 border border-slate-800 ${colorClass} flex justify-between items-center text-[11px]`;
+            const timeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            item.innerHTML = `<span>${msg}</span><span class="text-[9px] text-slate-500">${timeStr}</span>`;
+            logList.insertBefore(item, logList.firstChild);
+            if (logList.children.length > 15) logList.removeChild(logList.lastChild);
+        }
+
+        function updateUI() {
+            document.getElementById('gold-display').innerText = state.gold.toLocaleString();
+            document.getElementById('gem-display').innerText = state.gems.toLocaleString();
+            document.getElementById('level-display').innerText = state.level;
+
+            const expPercent = Math.min(100, Math.floor((state.exp / state.maxExp) * 100));
+            document.getElementById('exp-bar').style.width = expPercent + '%';
+            document.getElementById('exp-text').innerText = `${state.exp} / ${state.maxExp} (${expPercent}%)`;
+
+            const sec = (3.5 / getFishingSpeedMult()).toFixed(1);
+            document.getElementById('fishing-speed-text').innerHTML = `<i class="fa-solid fa-gauge-high mr-1"></i> ${sec}초 / 회`;
+            document.getElementById('luck-rate-text').innerText = `+${Math.round(getLuckBonus() * 100)}% 증가`;
+
+            const curW = WEATHERS[currentWeather];
+            document.getElementById('weather-status-text').innerHTML = `${curW.icon} ${curW.name}`;
+            document.getElementById('weather-buff-text').innerText = `속도 +${Math.round((curW.speedMult-1)*100)}% / 행운 +${Math.round(curW.luckMult*100)}%`;
+
+            document.getElementById('current-spot-name').innerText = SPOTS[state.currentSpot] ? SPOTS[state.currentSpot].name : SPOTS[0].name;
+            document.getElementById('inv-count').innerText = state.inventory.length;
+
+            const rodCost = Math.floor(100 * Math.pow(1.4, state.rodLv - 1));
+            document.getElementById('rod-level').innerText = `Lv.${state.rodLv}`;
+            document.getElementById('rod-desc').innerHTML = `낚시 속도 <span class="text-emerald-400 font-bold">+${Math.round((getFishingSpeedMult() - 1) * 100)}%</span>`;
+            document.getElementById('upgrade-rod-btn').innerText = `강화 (${rodCost.toLocaleString()}G)`;
+
+            const reelCost = Math.floor(150 * Math.pow(1.4, state.reelLv - 1));
+            document.getElementById('reel-level').innerText = `Lv.${state.reelLv}`;
+            document.getElementById('reel-desc').innerHTML = `입질 대기시간 <span class="text-cyan-400 font-bold">-${state.reelLv * 8}%</span>`;
+            document.getElementById('upgrade-reel-btn').innerText = `강화 (${reelCost.toLocaleString()}G)`;
+
+            const baitCost = Math.floor(200 * Math.pow(1.5, state.baitLv - 1));
+            document.getElementById('bait-level').innerText = `Lv.${state.baitLv}`;
+            document.getElementById('bait-desc').innerHTML = `희귀 어종 확률 <span class="text-amber-400 font-bold">+${Math.round(getLuckBonus() * 100)}%</span>`;
+            document.getElementById('upgrade-bait-btn').innerText = `강화 (${baitCost.toLocaleString()}G)`;
+
+            document.getElementById('autosell-all-toggle').checked = state.autoSellAll;
+            document.getElementById('prestige-drops').innerText = `${state.prestigeDrops}개`;
+            document.getElementById('p-speed-lv').innerText = state.pSpeedLv;
+            document.getElementById('p-speed-val').innerText = state.pSpeedLv * 10;
+            document.getElementById('p-luck-lv').innerText = state.pLuckLv;
+            document.getElementById('p-luck-val').innerText = state.pLuckLv * 5;
+
+            renderInventory();
+            renderSpots();
+            renderCodex();
+            renderQuests();
+            renderSkins();
+            renderExtendedSystems();
+        }
+
+        function renderExtendedSystems() {
+            const caught = state.totalCaught || 0;
+            const elapsedHours = Math.max(1/3600, (Date.now() - (state.sessionStartedAt || Date.now())) / 3600000);
+            const earnedThisSession = Math.max(0, (state.totalGoldEarned || 0) - (state.sessionGoldStart || 0));
+            const gph = earnedThisSession / elapsedHours;
+            const el = id => document.getElementById(id);
+            if (el('stat-gps')) el('stat-gps').textContent = (gph/3600).toFixed(2) + ' G/s';
+            if (el('stat-gpm')) el('stat-gpm').textContent = Math.round(gph/60).toLocaleString() + ' G/m';
+            if (el('stat-gph')) el('stat-gph').textContent = Math.round(gph).toLocaleString() + ' G/h';
+            if (el('stat-caught')) el('stat-caught').textContent = caught.toLocaleString() + '회';
+            if (el('stat-rare')) el('stat-rare').textContent = `희귀 획득 보정: +${Math.round(getLuckBonus()*100)}% · 황금 물고기 ${(state.goldenCaught||0)}마리 · 보스 ${(state.bossCaught||0)}마리`;
+            if (el('special-catch-status')) el('special-catch-status').textContent = `🌟 황금 물고기 ${(state.goldenCaught||0)}마리 · 🐉 보스 ${(state.bossCaught||0)}마리`;
+            const lv = state.rodEnhanceLv || 0;
+            const tier = lv >= 15 ? '우주 진화형' : lv >= 10 ? '신화 진화형' : lv >= 5 ? '황금 진화형' : '기본형';
+            if (el('rod-evolution-status')) el('rod-evolution-status').textContent = `낚싯대 +${lv} · ${tier} · 속도 보너스 +${lv*2}%`;
+            if (el('rod-enhance-btn')) el('rod-enhance-btn').textContent = `낚싯대 강화 +${lv+1} (${Math.floor(250*Math.pow(1.35,lv)).toLocaleString()}G)`;
+            if (el('daily-streak-text')) el('daily-streak-text').textContent = `연속 출석: ${state.dailyStreak||0}일`;
+            if (el('daily-quest-text')) el('daily-quest-text').textContent = `오늘의 임무: 물고기 50마리 잡기 (${Math.min(50,caught)}/50) · 보상 500G + 보석 3개`;
+            if (el('daily-claim-btn')) { const today = new Date().toLocaleDateString('en-CA'); el('daily-claim-btn').disabled = state.lastDailyClaim === today; el('daily-claim-btn').textContent = state.lastDailyClaim === today ? '오늘 보상 수령 완료' : '일일 보상 받기'; }
+            if (el('offline-status')) el('offline-status').textContent = `예상 보상: ${(state.offlinePending||0).toLocaleString()}G (최대 8시간)`;
+            if (el('region-progress')) el('region-progress').textContent = `${state.currentSpot+1} / ${SPOTS.length} 지역`;
+            if (el('region-cards')) { el('region-cards').innerHTML = ''; SPOTS.forEach(spot => { const unlocked = state.level >= spot.minLevel; const active = state.currentSpot === spot.id; const b = document.createElement('button'); b.className = `rounded-xl border p-2 text-xs ${active?'border-cyan-400 bg-cyan-950/60':unlocked?'border-slate-600 bg-slate-900/60':'border-slate-800 bg-slate-950/40 opacity-60'}`; b.innerHTML = `<b>${spot.name}</b><div class="mt-1 text-slate-400">${active?'낚시 중':unlocked?'Lv.'+spot.minLevel+' 해금':'Lv.'+spot.minLevel+' 필요'}</div>`; b.disabled = !unlocked || active; b.onclick = () => { state.currentSpot=spot.id; addLog(`🗺️ ${spot.name} 지역 해금/이동!`, 'text-cyan-300'); updateUI(); saveGame(); }; el('region-cards').appendChild(b); }); }
+        }
+
+        function renderSkins() {
+            const container = document.getElementById('skins-container');
+            if (!container) return;
+            container.innerHTML = '';
+            ROD_SKINS.forEach(skin => {
+                const isUnlocked = state.unlockedSkins[skin.id];
+                const isEquipped = state.equippedSkin === skin.id;
+
+                const card = document.createElement('div');
+                card.className = `p-2.5 rounded-xl border flex flex-col justify-between text-xs ${
+                    isEquipped ? 'border-cyan-400 bg-cyan-950/40' : isUnlocked ? 'border-slate-700 bg-slate-900/50' : 'border-slate-800 bg-slate-950/60 opacity-70'
+                }`;
+                card.innerHTML = `
+                    <div>
+                        <div class="font-bold text-white flex items-center justify-between">
+                            <span>${skin.name}</span>
+                            ${isEquipped ? '<span class="text-[9px] text-cyan-300 bg-cyan-500/20 px-1.5 py-0.2 rounded border border-cyan-400/40">장착중</span>' : ''}
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${skin.desc}</p>
+                    </div>
+                    <button class="mt-2 w-full py-1.5 rounded font-bold text-[11px] transition-all ${
+                        isEquipped ? 'bg-slate-800 text-slate-400 cursor-default' : isUnlocked ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white shadow'
+                    }" ${isEquipped ? 'disabled' : ''}>
+                        ${isEquipped ? '착용 중' : isUnlocked ? '장착하기' : `해금 (${skin.costGems} 보석)`}
+                    </button>
+                `;
+
+                const btn = card.querySelector('button');
+                if (!isEquipped) {
+                    btn.onclick = () => {
+                        if (isUnlocked) {
+                            state.equippedSkin = skin.id;
+                            addLog(`✨ [${skin.name}] 스킨을 장착했습니다.`, 'text-cyan-300');
+                            updateUI(); saveGame();
+                        } else {
+                            if (state.gems >= skin.costGems) {
+                                state.gems -= skin.costGems;
+                                state.unlockedSkins[skin.id] = true;
+                                state.equippedSkin = skin.id;
+                                addLog(`🎉 [${skin.name}] 스킨을 해금하고 장착했습니다!`, 'text-amber-300 font-bold');
+                                updateUI(); saveGame();
+                            } else {
+                                alert("마력 보석이 부족합니다!");
+                            }
+                        }
+                    };
+                }
+                container.appendChild(card);
+            });
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            for (let i = 0; i < state.maxInv; i++) {
+                const item = state.inventory[i];
+                const slot = document.createElement('div');
+                slot.className = 'aspect-square rounded-xl glass-panel flex flex-col items-center justify-center p-1 relative border transition-all cursor-pointer hover:border-indigo-400';
+                if (item) {
+                    slot.classList.add(`rarity-${item.rarity}`);
+                    slot.innerHTML = `
+                        <span class="text-xl">${item.icon}</span>
+                        <span class="text-[9px] font-bold truncate max-w-full mt-0.5 text-center">${item.name}</span>
+                        <span class="text-[8px] text-amber-300 font-semibold">${item.val}G</span>
+                    `;
+                    slot.onclick = () => sellSingleItem(i);
+                } else {
+                    slot.classList.add('border-slate-800', 'bg-slate-900/30');
+                    slot.innerHTML = `<span class="text-slate-700 text-xs">${i + 1}</span>`;
+                }
+                grid.appendChild(slot);
+            }
+        }
+
+        function sellSingleItem(index) {
+            const item = state.inventory[index];
+            if (!item) return;
+            state.inventory.splice(index, 1);
+            addGold(item.val);
+            addLog(`[판매] ${item.name}을(를) ${item.val}G에 판매했습니다.`, 'text-amber-300');
+            updateUI(); saveGame();
+        }
+
+        function renderSpots() {
+            const container = document.getElementById('spot-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+            SPOTS.forEach(spot => {
+                const isUnlocked = state.level >= spot.minLevel;
+                const isCurrent = state.currentSpot === spot.id;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border transition-all flex flex-col justify-between ${
+                    isCurrent ? 'border-cyan-400 bg-cyan-950/40 shadow-lg shadow-cyan-950/50' : isUnlocked ? 'border-slate-700 bg-slate-900/50 hover:border-slate-500' : 'border-slate-800 bg-slate-950/80 opacity-60'
+                }`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <div class="font-bold text-xs text-slate-100 flex items-center gap-1.5">
+                                ${spot.name}
+                                ${isCurrent ? '<span class="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded border border-cyan-400/40">현재 위치</span>' : ''}
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">입장 제한: Lv.${spot.minLevel}</div>
+                        </div>
+                    </div>
+                    <button class="mt-2 w-full py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        isCurrent ? 'bg-slate-800 text-slate-400 cursor-default' : isUnlocked ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    }" ${!isUnlocked || isCurrent ? 'disabled' : ''}>
+                        ${isCurrent ? '낚시 중' : isUnlocked ? '이동하기' : '레벨 부족'}
+                    </button>
+                `;
+                if (isUnlocked && !isCurrent) {
+                    card.querySelector('button').onclick = () => {
+                        state.currentSpot = spot.id;
+                        addLog(`🗺️ ${spot.name}(으)로 이동했습니다.`, 'text-cyan-300');
+                        updateUI(); saveGame();
+                    };
+                }
+                container.appendChild(card);
+            });
+        }
+
+        function renderCodex() {
+            const grid = document.getElementById('codex-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            let totalTypes = ITEM_DATABASE.length;
+            let caughtTypes = 0;
+            ITEM_DATABASE.forEach(item => {
+                const count = state.codex[item.id] || 0;
+                if (count > 0) caughtTypes++;
+                const card = document.createElement('div');
+                card.className = `p-2 rounded-xl glass-panel border flex items-center gap-2 ${count > 0 ? `rarity-${item.rarity}` : 'border-slate-800 bg-slate-950/60 opacity-50'}`;
+                card.innerHTML = `
+                    <div class="text-2xl">${count > 0 ? item.icon : '❓'}</div>
+                    <div class="overflow-hidden">
+                        <div class="text-xs font-bold truncate">${count > 0 ? item.name : '미발견 어종'}</div>
+                        <div class="text-[10px] text-slate-400">${count > 0 ? `획득: ${count}회` : '미수집'}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            const percent = Math.floor((caughtTypes / totalTypes) * 100);
+            document.getElementById('codex-completion-text').innerText = `${percent}% (${caughtTypes}/${totalTypes})`;
+        }
+
+        function renderQuests() {
+            const container = document.getElementById('quests-container');
+            if (!container) return;
+            container.innerHTML = '';
+            ACHIEVEMENTS_DEF.forEach(ach => {
+                let currentVal = 0;
+                if (ach.type === 'caught') currentVal = state.totalCaught;
+                else if (ach.type === 'gold') currentVal = state.totalGoldEarned;
+                else if (ach.type === 'upgrade') currentVal = Math.max(state.rodLv, state.reelLv, state.baitLv);
+
+                const isCompleted = currentVal >= ach.target;
+                const isClaimed = state.achievements[ach.id];
+                const progressPct = Math.min(100, Math.floor((currentVal / ach.target) * 100));
+
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-3 rounded-xl border border-slate-700/60 flex items-center justify-between gap-3 text-xs';
+                card.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-white">${ach.title}</span>
+                            <span class="text-[10px] text-cyan-300 font-semibold"><i class="fa-solid fa-gem mr-1"></i>+${ach.rewardGems} 보석</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-1.5">${ach.desc}</p>
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+                            <div class="bg-gradient-to-r from-amber-500 to-indigo-500 h-full rounded-full transition-all" style="width: ${progressPct}%"></div>
+                        </div>
+                    </div>
+                    <button class="px-3 py-2 rounded-lg font-bold text-xs transition-all ${
+                        isClaimed ? 'bg-slate-800 text-slate-500 cursor-default' : isCompleted ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-md' : 'bg-slate-800 text-slate-400 cursor-not-allowed'
+                    }" ${!isCompleted || isClaimed ? 'disabled' : ''}>
+                        ${isClaimed ? '완료됨' : isCompleted ? '보상받기' : `${currentVal}/${ach.target}`}
+                    </button>
+                `;
+
+                if (isCompleted && !isClaimed) {
+                    card.querySelector('button').onclick = () => {
+                        state.achievements[ach.id] = true;
+                        state.gems += ach.rewardGems;
+                        addLog(`🏆 업적 달성 보상 수령: ${ach.title} (+${ach.rewardGems} 마력 보석)`, 'text-amber-300 font-bold');
+                        updateUI(); saveGame();
+                    };
+                }
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('spin-roulette-btn').onclick = () => {
+            const cost = 5;
+            if (state.gems < cost) { alert("마력 보석이 부족합니다!"); return; }
+            state.gems -= cost;
+
+            const display = document.getElementById('roulette-result-display');
+            display.innerText = "룰렛 돌리는 중...";
+            display.className = "text-lg font-extrabold text-pink-400 h-12 flex items-center justify-center bg-slate-900/60 w-full rounded-xl border border-slate-800 animate-pulse";
+
+            setTimeout(() => {
+                const rand = Math.random();
+                let prizeText = "";
+                if (rand < 0.40) {
+                    addGold(500); prizeText = `🎉 대박! 골드 +500G 당첨!`;
+                } else if (rand < 0.70) {
+                    addGold(2000); prizeText = `🔥 초대박! 골드 +2,000G 당첨!`;
+                } else if (rand < 0.90) {
+                    state.gems += 10; prizeText = `💎 행운의 보석 환급! +10 보석!`;
+                } else {
+                    state.prestigeDrops += 1; prizeText = `👑 전설 당첨! 신의 물방울 +1개 획득!`;
+                }
+                display.innerText = prizeText;
+                display.className = "text-sm font-extrabold text-amber-300 h-12 flex items-center justify-center bg-slate-900/60 w-full rounded-xl border border-slate-800";
+                updateUI(); saveGame();
+            }, 800);
+        };
+
+        document.getElementById('do-prestige-btn').onclick = () => {
+            if (state.level < 30) { alert("환생은 낚시 레벨 30 이상부터 가능합니다!"); return; }
+            if (confirm("정말 환생하시겠습니까? 레벨, 골드, 장비가 초기화되는 대신 [신의 물방울 3개]를 획득합니다!")) {
+                state.prestigeDrops += 3;
+                state.gold = 100; state.level = 1; state.exp = 0; state.maxExp = 100;
+                state.currentSpot = 0; state.rodLv = 1; state.reelLv = 1; state.baitLv = 1; state.inventory = [];
+                addLog(`✨ 환생을 완료했습니다!`, 'text-cyan-300 font-bold');
+                updateUI(); saveGame();
+            }
+        };
+
+        document.getElementById('upgrade-p-speed').onclick = () => {
+            if (state.prestigeDrops >= 1) {
+                state.prestigeDrops -= 1; state.pSpeedLv += 1;
+                addLog(`⚡ 영구 속도 버프 강화 완료! (Lv.${state.pSpeedLv})`, 'text-cyan-300');
+                updateUI(); saveGame();
+            } else { alert("신의 물방울이 부족합니다!"); }
+        };
+
+        document.getElementById('upgrade-p-luck').onclick = () => {
+            if (state.prestigeDrops >= 1) {
+                state.prestigeDrops -= 1; state.pLuckLv += 1;
+                addLog(`🍀 영구 행운 버프 강화 완료! (Lv.${state.pLuckLv})`, 'text-amber-300');
+                updateUI(); saveGame();
+            } else { alert("신의 물방울이 부족합니다!"); }
+        };
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                    b.classList.add('text-slate-400');
+                });
+                btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+                btn.classList.remove('text-slate-400');
+                const tabId = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
+
+        document.getElementById('upgrade-rod-btn').onclick = () => {
+            const cost = Math.floor(100 * Math.pow(1.4, state.rodLv - 1));
+            if (state.gold >= cost) { state.gold -= cost; state.rodLv++; updateUI(); saveGame(); }
+            else { addLog(`골드가 부족합니다!`, 'text-rose-400'); }
+        };
+        document.getElementById('upgrade-reel-btn').onclick = () => {
+            const cost = Math.floor(150 * Math.pow(1.4, state.reelLv - 1));
+            if (state.gold >= cost) { state.gold -= cost; state.reelLv++; updateUI(); saveGame(); }
+            else { addLog(`골드가 부족합니다!`, 'text-rose-400'); }
+        };
+        document.getElementById('upgrade-bait-btn').onclick = () => {
+            const cost = Math.floor(200 * Math.pow(1.5, state.baitLv - 1));
+            if (state.gold >= cost) { state.gold -= cost; state.baitLv++; updateUI(); saveGame(); }
+            else { addLog(`골드가 부족합니다!`, 'text-rose-400'); }
+        };
+
+        document.getElementById('manual-cast-btn').onclick = () => {
+            sfx.init();
+            if (fishingState === 'reeling') { reelProgress = Math.min(100, reelProgress + 25); sfx.playReel(); }
+            else if (fishingState === 'idle') { stepFishingLogic(); }
+        };
+
+        canvas.addEventListener('click', () => {
+            sfx.init();
+            if (fishingState === 'reeling') { reelProgress = Math.min(100, reelProgress + 20); sfx.playReel(); }
+        });
+
+        // 자동 낚시 토글 UI는 현재 HTML에 없으므로, 요소가 있을 때만 이벤트를 연결합니다.
+        const toggleAutoBtn = document.getElementById('toggle-auto-btn');
+        if (toggleAutoBtn) {
+            toggleAutoBtn.onclick = () => {
+                state.autoFishing = !state.autoFishing;
+                toggleAutoBtn.innerText = state.autoFishing ? '자동 OFF' : '자동 ON';
+                toggleAutoBtn.className = state.autoFishing ? 'px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg' : 'px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-700 text-slate-300';
+                const autoStatus = document.getElementById('auto-status-text');
+                if (autoStatus) {
+                    autoStatus.innerHTML = state.autoFishing ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> 작동 중' : '<span class="w-2 h-2 rounded-full bg-slate-500"></span> 중지됨';
+                }
+                saveGame();
+            };
+        }
+
+        document.getElementById('sell-all-btn').onclick = () => {
+            let totalVal = 0; state.inventory.forEach(item => totalVal += item.val); state.inventory = [];
+            if (totalVal > 0) { addGold(totalVal); addLog(`[일괄판매] 소지품을 전체 판매하여 ${totalVal.toLocaleString()}G를 얻었습니다.`, 'text-amber-300'); updateUI(); saveGame(); }
+            else { addLog(`판매할 아이템이 없습니다.`, 'text-slate-400'); }
+        };
+
+        document.getElementById('autosell-all-toggle').onchange = (e) => { state.autoSellAll = e.target.checked; saveGame(); };
+
+        document.getElementById('sound-toggle-btn').onclick = () => {
+            sfx.init(); sfx.enabled = !sfx.enabled;
+            document.getElementById('sound-icon').className = sfx.enabled ? 'fa-solid fa-volume-high text-lg' : 'fa-solid fa-volume-xmark text-lg text-slate-500';
+        };
+
+        const afkOverlay = document.getElementById('afk-overlay');
+        document.getElementById('afk-mode-btn').onclick = () => {
+            afkOverlay.classList.remove('hidden'); afkStats = { seconds: 0, itemsCaught: 0, goldEarned: 0 };
+            afkInterval = setInterval(() => {
+                afkStats.seconds++;
+                const hrs = String(Math.floor(afkStats.seconds / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((afkStats.seconds % 3600) / 60)).padStart(2, '0');
+                const secs = String(afkStats.seconds % 60).padStart(2, '0');
+                document.getElementById('afk-timer-text').innerText = `${hrs}:${mins}:${secs}`;
+                document.getElementById('afk-count-text').innerText = `${afkStats.itemsCaught} 개`;
+                document.getElementById('afk-gold-text').innerText = `${afkStats.goldEarned.toLocaleString()} G`;
+            }, 1000);
+        };
+
+        document.getElementById('exit-afk-btn').onclick = () => { afkOverlay.classList.add('hidden'); if (afkInterval) clearInterval(afkInterval); };
+        document.getElementById('reset-game-btn').onclick = () => { if (confirm("정말로 모든 게임 진행도를 초기화하시겠습니까?")) { localStorage.removeItem('maedo_fishing_save'); location.reload(); } };
+
+
+        document.getElementById('rod-enhance-btn').onclick = () => {
+            const lv = state.rodEnhanceLv || 0; const cost = Math.floor(250 * Math.pow(1.35, lv));
+            if (state.gold < cost) { addLog(`낚싯대 강화에는 ${cost.toLocaleString()}G가 필요합니다.`, 'text-rose-400'); return; }
+            state.gold -= cost; state.rodEnhanceLv = lv + 1;
+            if (state.rodEnhanceLv % 5 === 0) addLog(`✨ 낚싯대 진화! +${state.rodEnhanceLv} ${state.rodEnhanceLv>=15?'우주 진화형':state.rodEnhanceLv>=10?'신화 진화형':'황금 진화형'} 달성!`, 'text-amber-300 font-extrabold');
+            else addLog(`낚싯대 강화 성공! +${state.rodEnhanceLv} (실패/파괴 없음)`, 'text-cyan-300');
+            updateUI(); saveGame();
+        };
+        document.getElementById('daily-claim-btn').onclick = () => {
+            const today = new Date().toLocaleDateString('en-CA');
+            if (state.lastDailyClaim === today) return;
+            if ((state.totalCaught||0) < 50) { alert('일일 임무 완료 조건: 물고기 50마리 잡기!'); return; }
+            const yesterday = new Date(Date.now()-86400000).toLocaleDateString('en-CA');
+            state.dailyStreak = state.lastDailyClaim === yesterday ? (state.dailyStreak||0)+1 : 1;
+            state.lastDailyClaim = today; state.gold += 500; state.totalGoldEarned += 500; state.gems += 3 + Math.min(7, Math.floor(state.dailyStreak/3));
+            addLog(`🎁 일일 임무 완료! 500G와 보석 보상 지급 (연속 ${state.dailyStreak}일)`, 'text-emerald-300 font-bold'); updateUI(); saveGame();
+        };
+        document.getElementById('offline-claim-btn').onclick = () => {
+            const reward = state.offlinePending || 0; if (!reward) { alert('받을 오프라인 보상이 없습니다. 다음 접속 때 확인해 주세요.'); return; }
+            state.offlinePending = 0; addGold(reward); addLog(`🌙 오프라인 보상 ${reward.toLocaleString()}G 획득!`, 'text-purple-300 font-bold'); updateUI(); saveGame();
+        };
+
+        function saveGame() { state.lastSeen = Date.now(); localStorage.setItem('maedo_fishing_save', JSON.stringify(state)); }
+        function loadGame() {
+            const data = localStorage.getItem('maedo_fishing_save');
+            if (data) { try { const saved = JSON.parse(data); const previousSeen = Number(saved.lastSeen || Date.now()); state = { ...state, ...saved }; const awaySeconds = Math.min(8*3600, Math.max(0, (Date.now()-previousSeen)/1000)); const estimatedGoldPerSecond = Math.max(0, ((state.totalGoldEarned||0) - (state.sessionGoldStart||0)) / Math.max(60, (previousSeen-(state.sessionStartedAt||previousSeen))/1000)); state.offlinePending = Math.floor(awaySeconds * estimatedGoldPerSecond * 0.35); state.lastSeen = Date.now(); } catch (e) { console.error(e); } }
+        }
+
+        window.onload = () => {
+            loadGame();
+            state.sessionStartedAt = Date.now(); state.sessionGoldStart = state.totalGoldEarned || 0;
+            requestAnimationFrame(() => {
+                resizeCanvas();
+                updateUI();
+                renderCanvas();
+            });
+            setInterval(() => { if (state.autoFishing) stepFishingLogic(); }, 200);
+            setInterval(() => { currentWeather = (currentWeather + 1) % WEATHERS.length; updateUI(); }, 60000);
+            setInterval(saveGame, 10000);
+        };
+    </script>
+</body>
+</html>
